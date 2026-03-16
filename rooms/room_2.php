@@ -1,48 +1,121 @@
 <?php
-require_once('../dbcon.php');
+session_start();
+require_once '../dbcon.php';
 
-try {
-  $stmt = $db_connection->query("SELECT * FROM riddles WHERE roomId = 2");
-  $riddles = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-  die("Databasefout: " . $e->getMessage());
+if (!isset($_SESSION['escape'])) {
+    header('Location: ../team.php');
+    exit;
+}
+
+$escape = &$_SESSION['escape'];
+if (count($escape['solved_room_1']) < 3) {
+    header('Location: room_1.php');
+    exit;
+}
+
+$timeLeft = ($escape['start_time'] + $escape['duration']) - time();
+if ($timeLeft <= 0) {
+    header('Location: ../finish.php?status=lost');
+    exit;
+}
+
+$riddles = $pdo->query('SELECT id, riddle, answer, hint, roomId FROM riddles WHERE roomId = 2 ORDER BY id ASC')->fetchAll();
+$feedback = '';
+$feedbackType = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $riddleId = (int) ($_POST['riddle_id'] ?? 0);
+    $answer = trim($_POST['answer'] ?? '');
+
+    foreach ($riddles as $riddle) {
+        if ($riddle['id'] === $riddleId) {
+            if (mb_strtolower($answer) === mb_strtolower($riddle['answer'])) {
+                if (!in_array($riddleId, $escape['solved_room_2'], true)) {
+                    $escape['solved_room_2'][] = $riddleId;
+                }
+                $feedback = 'Goed antwoord.';
+                $feedbackType = 'success';
+            } else {
+                $feedback = 'Dat antwoord is niet goed. Gebruik de hint en probeer opnieuw.';
+                $feedbackType = 'error';
+            }
+            break;
+        }
+    }
+
+    if (count($escape['solved_room_2']) === count($riddles)) {
+        $escape['finished'] = true;
+        header('Location: ../finish.php?status=won');
+        exit;
+    }
 }
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escape Room 2</title>
-  <link rel="stylesheet" href="../css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamer 2</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
-
 <body>
+    <header class="site-header">
+        <h1>Kamer 2 · Jungle</h1>
+        <p>De laatste route naar de ontsnappingsboot ligt voor je.</p>
+    </header>
 
-  <div class="container">
-    <?php foreach ($riddles as $index => $riddle) : ?>
-    <div class="box box<?php echo $index + 1; ?>" onclick="openModal(<?php echo $index; ?>)"
-      data-index="<?php echo $index; ?>" data-riddle="<?php echo htmlspecialchars($riddle['riddle']); ?>"
-      data-answer="<?php echo htmlspecialchars($riddle['answer']); ?>">
-      Box <?php echo $index + 1; ?>
-    </div>
-    <?php endforeach; ?>
-  </div>
+    <main class="content-card">
+        <section class="hud-grid">
+            <article class="hud-item">
+                <span class="hud-label">Team</span>
+                <strong><?= htmlspecialchars($escape['team_name']) ?></strong>
+            </article>
+            <article class="hud-item">
+                <span class="hud-label">Spelers</span>
+                <strong><?= htmlspecialchars($escape['player_one']) ?> & <?= htmlspecialchars($escape['player_two']) ?></strong>
+            </article>
+            <article class="hud-item">
+                <span class="hud-label">Timer</span>
+                <strong id="timer" data-time-left="<?= $timeLeft ?>">00:00</strong>
+            </article>
+            <article class="hud-item">
+                <span class="hud-label">Voortgang</span>
+                <strong><?= count($escape['solved_room_2']) ?> / <?= count($riddles) ?></strong>
+            </article>
+        </section>
 
-  <section class="overlay" id="overlay" onclick="closeModal()"></section>
+        <?php if ($feedback !== ''): ?>
+            <p class="message <?= $feedbackType === 'success' ? 'message-success' : 'message-error' ?>"><?= htmlspecialchars($feedback) ?></p>
+        <?php endif; ?>
 
-  <section class="modal" id="modal">
-    <h2>Escape Room Vraag</h2>
-    <p id="riddle"></p>
-    <input type="text" id="answer" placeholder="Typ je antwoord">
-    <button onclick="checkAnswer()">Verzenden</button>
-    <p id="feedback"></p>
-  </section>
+        <section class="room-grid">
+            <?php foreach ($riddles as $riddle): ?>
+                <?php $solved = in_array($riddle['id'], $escape['solved_room_2'], true); ?>
+                <article class="riddle-card <?= $solved ? 'riddle-card-solved' : '' ?>">
+                    <div class="riddle-card-top">
+                        <span class="badge">Raadsel <?= htmlspecialchars((string) $riddle['id']) ?></span>
+                        <?php if ($solved): ?>
+                            <span class="status-pill">Opgelost</span>
+                        <?php endif; ?>
+                    </div>
+                    <h2><?= htmlspecialchars($riddle['riddle']) ?></h2>
+                    <p class="hint">Hint: <?= htmlspecialchars($riddle['hint']) ?></p>
+                    <?php if (!$solved): ?>
+                        <form method="post" class="inline-form">
+                            <input type="hidden" name="riddle_id" value="<?= $riddle['id'] ?>">
+                            <input type="text" name="answer" placeholder="Typ je antwoord" required>
+                            <button class="btn btn-primary" type="submit">Controleer</button>
+                        </form>
+                    <?php endif; ?>
+                </article>
+            <?php endforeach; ?>
+        </section>
 
-  <script src="../js/app.js"></script>
+        <div class="button-row button-row-center">
+            <a class="btn btn-secondary" href="room_1.php">Terug naar kamer 1</a>
+        </div>
+    </main>
 
+    <script src="../app.js"></script>
 </body>
-
 </html>
