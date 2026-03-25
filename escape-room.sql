@@ -2,12 +2,17 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
+DROP TABLE IF EXISTS `reviews`;
+DROP TABLE IF EXISTS `teams`;
+DROP TABLE IF EXISTS `riddles`;
+
 CREATE TABLE `riddles` (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `riddle` varchar(255) NOT NULL,
   `answer` varchar(100) NOT NULL,
   `hint` varchar(255) DEFAULT NULL,
-  `roomId` int NOT NULL
+  `roomId` int NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 INSERT INTO `riddles` (`id`, `riddle`, `answer`, `hint`, `roomId`) VALUES
@@ -19,37 +24,25 @@ INSERT INTO `riddles` (`id`, `riddle`, `answer`, `hint`, `roomId`) VALUES
 (6, 'Ik open een slot maar ben zelf geen deur. Wat ben ik?', 'Sleutel', 'Zonder mij blijf je opgesloten.', 2);
 
 CREATE TABLE `teams` (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `team_name` varchar(100) NOT NULL,
   `player_one` varchar(100) NOT NULL,
   `player_two` varchar(100) NOT NULL,
-  `score` int NOT NULL DEFAULT 0
+  `score` int NOT NULL DEFAULT 0,
+  `escaped` tinyint(1) NOT NULL DEFAULT 0,
+  `end_time_seconds` int DEFAULT NULL,
+  `finished_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `reviews` (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `team_name` varchar(100) NOT NULL,
   `rating` int NOT NULL,
   `difficulty` varchar(50) NOT NULL,
   `review_text` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-ALTER TABLE `riddles`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `teams`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `reviews`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `riddles`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
-ALTER TABLE `teams`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `reviews`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 COMMIT;

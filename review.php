@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             $message = 'Je review is opgeslagen.';
         } catch (PDOException $e) {
-            $message = 'De pagina werkt, maar maak eerst de reviews-tabel aan in phpMyAdmin.';
+            $message = 'De reviews konden niet worden opgeslagen.';
             $messageClass = 'message-error';
         }
     }
@@ -47,71 +47,73 @@ $prefillTeam = $_SESSION['escape']['team_name'] ?? '';
     <title>Reviewpagina</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="theme-home">
     <header class="site-header">
         <h1>Reviewpagina</h1>
         <p>Laat weten hoe jullie Escape Island vonden.</p>
     </header>
 
-    <main class="content-card review-layout">
-        <section class="form-panel">
-            <h2>Plaats een review</h2>
+    <main class="page-shell page-shell-start">
+        <section class="content-card review-layout">
+            <section class="form-panel">
+                <h2>Plaats een review</h2>
 
-            <?php if ($message !== ''): ?>
-                <p class="message <?= $messageClass ?>"><?= htmlspecialchars($message) ?></p>
-            <?php endif; ?>
+                <?php if ($message !== ''): ?>
+                    <p class="message <?= $messageClass ?>"><?= htmlspecialchars($message) ?></p>
+                <?php endif; ?>
 
-            <form method="post" class="form-grid">
-                <label>
-                    <span>Teamnaam</span>
-                    <input type="text" name="team_name" value="<?= htmlspecialchars($prefillTeam) ?>" required>
-                </label>
-                <label>
-                    <span>Rating</span>
-                    <select name="rating" required>
-                        <option value="">Kies een cijfer</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                    </select>
-                </label>
-                <label>
-                    <span>Moeilijkheid</span>
-                    <select name="difficulty" required>
-                        <option value="">Kies een niveau</option>
-                        <option value="Makkelijk">Makkelijk</option>
-                        <option value="Gemiddeld">Gemiddeld</option>
-                        <option value="Moeilijk">Moeilijk</option>
-                    </select>
-                </label>
-                <label class="full-width">
-                    <span>Review</span>
-                    <textarea name="review_text" rows="5" placeholder="Wat vonden jullie van de escape room?" required></textarea>
-                </label>
-                <button class="btn btn-primary" type="submit">Review opslaan</button>
-            </form>
-        </section>
+                <form method="post" class="form-grid">
+                    <label>
+                        <span>Teamnaam</span>
+                        <input type="text" name="team_name" value="<?= htmlspecialchars($prefillTeam) ?>" required>
+                    </label>
+                    <label>
+                        <span>Rating</span>
+                        <select name="rating" required>
+                            <option value="">Kies een cijfer</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Moeilijkheid</span>
+                        <select name="difficulty" required>
+                            <option value="">Kies een niveau</option>
+                            <option value="Makkelijk">Makkelijk</option>
+                            <option value="Gemiddeld">Gemiddeld</option>
+                            <option value="Moeilijk">Moeilijk</option>
+                        </select>
+                    </label>
+                    <label class="full-width">
+                        <span>Review</span>
+                        <textarea name="review_text" rows="5" placeholder="Wat vonden jullie van de escape room?" required></textarea>
+                    </label>
+                    <button class="btn btn-primary" type="submit">Review opslaan</button>
+                </form>
+            </section>
 
-        <section class="reviews-panel">
-            <h2>Laatste reviews</h2>
-            <?php if (count($reviews) === 0): ?>
-                <p class="empty-state">Er zijn nog geen reviews zichtbaar.</p>
-            <?php else: ?>
-                <div class="reviews-list">
-                    <?php foreach ($reviews as $review): ?>
-                        <article class="review-card">
-                            <div class="review-card-top">
-                                <strong><?= htmlspecialchars($review['team_name']) ?></strong>
-                                <span><?= htmlspecialchars((string) $review['rating']) ?>/5 · <?= htmlspecialchars($review['difficulty']) ?></span>
-                            </div>
-                            <p><?= htmlspecialchars($review['review_text']) ?></p>
-                            <small><?= htmlspecialchars((string) $review['created_at']) ?></small>
-                        </article>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+            <section class="reviews-panel">
+                <h2>Laatste reviews</h2>
+                <?php if (count($reviews) === 0): ?>
+                    <p class="empty-state">Er zijn nog geen reviews zichtbaar.</p>
+                <?php else: ?>
+                    <div class="reviews-list">
+                        <?php foreach ($reviews as $review): ?>
+                            <article class="review-card">
+                                <div class="review-card-top">
+                                    <strong><?= htmlspecialchars($review['team_name']) ?></strong>
+                                    <span><?= htmlspecialchars((string) $review['rating']) ?>/5 · <?= htmlspecialchars($review['difficulty']) ?></span>
+                                </div>
+                                <p><?= htmlspecialchars($review['review_text']) ?></p>
+                                <small><?= htmlspecialchars((string) $review['created_at']) ?></small>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
         </section>
     </main>
 

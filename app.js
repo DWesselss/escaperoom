@@ -1,25 +1,57 @@
-const timerElement = document.getElementById('timer');
+document.addEventListener("DOMContentLoaded", () => {
+    const timerElement = document.getElementById("timer");
+    const countdownElement = document.getElementById("countdown");
 
-if (timerElement) {
-    let timeLeft = Number(timerElement.dataset.timeLeft);
+    if (timerElement) {
+        let elapsed = Number(timerElement.dataset.elapsed || 0);
+        const limit = Number(timerElement.dataset.limit || 900);
 
-    const formatTime = (seconds) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
-    };
+        const formatTime = (seconds) => {
+            const safeSeconds = Math.max(0, seconds);
+            const minutes = Math.floor(safeSeconds / 60);
+            const remainingSeconds = safeSeconds % 60;
+            return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+        };
 
-    const updateTimer = () => {
-        timerElement.textContent = formatTime(Math.max(timeLeft, 0));
+        const updateTimer = () => {
+            timerElement.textContent = formatTime(elapsed);
 
-        if (timeLeft <= 0) {
-            window.location.href = '../finish.php?status=lost';
-            return;
-        }
+            if (countdownElement) {
+                const remaining = Math.max(0, limit - elapsed);
+                countdownElement.textContent = formatTime(remaining);
+            }
 
-        timeLeft -= 1;
-    };
+            elapsed += 1;
+        };
 
-    updateTimer();
-    setInterval(updateTimer, 1000);
-}
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    }
+
+    const playerCountSelect = document.getElementById("player-count");
+    const playerFields = document.querySelectorAll("[data-player-field]");
+
+    if (playerCountSelect && playerFields.length) {
+        const syncPlayerFields = () => {
+            const count = Number(playerCountSelect.value || 1);
+
+            playerFields.forEach((field) => {
+                const fieldIndex = Number(field.dataset.playerField);
+                const input = field.querySelector("input");
+                const isVisible = fieldIndex <= count;
+
+                field.style.display = isVisible ? "grid" : "none";
+
+                if (input) {
+                    input.required = isVisible;
+                    if (!isVisible) {
+                        input.value = "";
+                    }
+                }
+            });
+        };
+
+        syncPlayerFields();
+        playerCountSelect.addEventListener("change", syncPlayerFields);
+    }
+});
