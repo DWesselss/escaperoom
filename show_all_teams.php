@@ -65,6 +65,9 @@ function getTeamStatus(array $team, bool $hasExtendedColumns): string
 
             <h2>Teams</h2>
 
+            <?php if (!$hasExtendedColumns): ?>
+                <p class="message message-error">Importeer de nieuwe escape-room.sql om ook ontsnapt, eindtijd en finished_at op te slaan.</p>
+            <?php endif; ?>
 
             <?php if (count($teams) === 0): ?>
                 <p class="empty-state">Er zijn nog geen teams opgeslagen.</p>
