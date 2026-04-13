@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $elapsedTime = max(0, time() - $escape['start_time']);
-$timeLimit = 15 * 60;
+$timeLimit = 2 * 60;
 $remainingTime = max(0, $timeLimit - $elapsedTime);
 
 if ($elapsedTime >= $timeLimit) {
