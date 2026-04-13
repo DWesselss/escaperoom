@@ -3,12 +3,11 @@ session_start();
 require_once 'dbcon.php';
 
 $error = '';
+$teamName = trim($_POST['team_name'] ?? '');
+$playerCount = max(1, min(4, (int) ($_POST['player_count'] ?? 2)));
+$players = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $teamName = trim($_POST['team_name'] ?? '');
-    $playerCount = max(1, min(4, (int) ($_POST['player_count'] ?? 2)));
-    $players = [];
-
     for ($i = 1; $i <= $playerCount; $i++) {
         $players[] = trim($_POST['player_' . $i] ?? '');
     }
@@ -79,24 +78,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="post" class="form-grid" id="team-form">
                 <label>
                     <span>Teamnaam</span>
-                    <input type="text" name="team_name" placeholder="Bijvoorbeeld: Island Runners" required>
+                    <input type="text" name="team_name" placeholder="Bijvoorbeeld: Island Runners" value="<?= htmlspecialchars($teamName) ?>" required>
                 </label>
 
                 <label>
                     <span>Aantal spelers</span>
                     <select name="player_count" id="player-count" required>
-                        <option value="1">1 speler</option>
-                        <option value="2" selected>2 spelers</option>
-                        <option value="3">3 spelers</option>
-                        <option value="4">4 spelers</option>
+                        <option value="1" <?= $playerCount === 1 ? 'selected' : '' ?>>1 speler</option>
+                        <option value="2" <?= $playerCount === 2 ? 'selected' : '' ?>>2 spelers</option>
+                        <option value="3" <?= $playerCount === 3 ? 'selected' : '' ?>>3 spelers</option>
+                        <option value="4" <?= $playerCount === 4 ? 'selected' : '' ?>>4 spelers</option>
                     </select>
                 </label>
 
                 <div class="player-fields" id="player-fields">
                     <?php for ($i = 1; $i <= 4; $i++): ?>
-                        <label class="player-field<?= $i > 2 ? ' is-hidden' : '' ?>" data-player-field="<?= $i ?>">
+                        <?php
+                        $fieldValue = $_POST['player_' . $i] ?? '';
+                        $isVisible = $i <= $playerCount;
+                        ?>
+                        <label class="player-field<?= !$isVisible ? ' is-hidden' : '' ?>" data-player-field="<?= $i ?>" style="display: <?= $isVisible ? 'grid' : 'none' ?>;">
                             <span>Teamlid <?= $i ?></span>
-                            <input type="text" name="player_<?= $i ?>" placeholder="Naam van speler <?= $i ?>" <?= $i <= 2 ? 'required' : '' ?>>
+                            <input type="text" name="player_<?= $i ?>" placeholder="Naam van speler <?= $i ?>" value="<?= htmlspecialchars($fieldValue) ?>" <?= $isVisible ? 'required' : '' ?>>
                         </label>
                     <?php endfor; ?>
                 </div>
@@ -110,6 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <p>Escape Island © 2026</p>
     </footer>
 
-<script src="app.js?v=2"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>

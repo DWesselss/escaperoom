@@ -3,6 +3,7 @@ session_start();
 require_once 'dbcon.php';
 
 $status = $_GET['status'] ?? 'lost';
+$reason = $_GET['reason'] ?? '';
 $escape = $_SESSION['escape'] ?? null;
 
 if ($escape === null) {
@@ -45,6 +46,47 @@ if (empty($_SESSION['escape']['result_saved']) && !empty($escape['team_id'])) {
     } catch (PDOException $e) {
     }
 }
+
+$subtitle = $won
+    ? 'Jullie hebben minstens 4 van de ' . $totalRiddles . ' raadsels goed opgelost en zijn ontsnapt.'
+    : 'Jullie run is afgelopen.';
+
+$lead = $won
+    ? 'Sterk gespeeld. Jullie haalden de winvoorwaarde van minimaal 4 goede antwoorden en bereikten de boot op tijd.'
+    : 'Deze run telt als verlies. Probeer opnieuw en pak minstens 4 goede antwoorden zonder 3 fouten te maken.';
+
+$summaryTitle = $won ? 'Boot bereikt' : 'Escape mislukt';
+$summaryText = $won
+    ? 'Minimaal 4 antwoorden waren goed. Jullie eindtijd is opgeslagen in het teamoverzicht.'
+    : 'Ook dit resultaat is opgeslagen in het teamoverzicht.';
+
+if (!$won && $reason === 'time') {
+    $subtitle = 'De timer is afgelopen voordat jullie konden ontsnappen.';
+    $lead = 'De tijd was op, dus het spel is automatisch gestopt.';
+    $summaryTitle = 'Tijd is op';
+    $summaryText = 'De run is automatisch beëindigd omdat de countdown op 00:00 kwam.';
+}
+
+if (!$won && $reason === 'mistakes') {
+    $subtitle = 'Jullie hebben 3 fouten gemaakt en daardoor verloren.';
+    $lead = 'Na de derde fout stopte het spel direct.';
+    $summaryTitle = 'Te veel fouten';
+    $summaryText = 'Voor winst mag je niet op 3 fouten uitkomen.';
+}
+
+if (!$won && $reason === 'score') {
+    $subtitle = 'Alle raadsels zijn ingevuld, maar jullie haalden niet genoeg goede antwoorden.';
+    $lead = 'Jullie hebben het einde gehaald, maar minder dan 4 antwoorden waren goed.';
+    $summaryTitle = 'Te weinig goede antwoorden';
+    $summaryText = 'Voor winst heb je minimaal 4 goede antwoorden nodig.';
+}
+
+if (!$won && $reason === 'stopped') {
+    $subtitle = 'Het spel is handmatig gestopt.';
+    $lead = 'De run is beëindigd voordat alle raadsels waren afgerond.';
+    $summaryTitle = 'Spel gestopt';
+    $summaryText = 'Je kunt meteen opnieuw starten vanaf de homepagina.';
+}
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -57,7 +99,7 @@ if (empty($_SESSION['escape']['result_saved']) && !empty($escape['team_id'])) {
 <body class="theme-home">
     <header class="site-header">
         <h1><?= $won ? 'Victory' : 'Verlies' ?></h1>
-        <p><?= $won ? 'Jullie hebben minstens 4 van de 6 raadsels goed opgelost en zijn ontsnapt.' : 'Jullie hebben 3 fouten gemaakt of minder dan 4 goede antwoorden gehaald.' ?></p>
+        <p><?= htmlspecialchars($subtitle) ?></p>
     </header>
 
     <main class="page-shell">
@@ -66,9 +108,7 @@ if (empty($_SESSION['escape']['result_saved']) && !empty($escape['team_id'])) {
                 <?= $won ? 'Ontsnapt' : 'Niet gehaald' ?>
             </div>
             <h2><?= htmlspecialchars($escape['team_name']) ?></h2>
-            <p class="finish-lead">
-                <?= $won ? 'Sterk gespeeld. Jullie haalden de winvoorwaarde van minimaal 4 goede antwoorden en bereikten de boot op tijd.' : 'Deze run telt als verlies. Probeer opnieuw en pak minstens 4 van de 6 raadsels goed zonder 3 fouten te maken.' ?>
-            </p>
+            <p class="finish-lead"><?= htmlspecialchars($lead) ?></p>
 
             <div class="stats-grid">
                 <article class="stat-box">
@@ -85,7 +125,7 @@ if (empty($_SESSION['escape']['result_saved']) && !empty($escape['team_id'])) {
                 </article>
                 <article class="stat-box">
                     <span>Foute antwoorden</span>
-                    <strong><?= $wrongCount ?> / <?= $totalRiddles ?></strong>
+                    <strong><?= $wrongCount ?> / 3</strong>
                 </article>
                 <article class="stat-box">
                     <span>Ingevuld</span>
@@ -98,8 +138,8 @@ if (empty($_SESSION['escape']['result_saved']) && !empty($escape['team_id'])) {
             </div>
 
             <div class="finish-summary <?= $won ? 'finish-summary-win' : 'finish-summary-loss' ?>">
-                <strong><?= $won ? 'Boot bereikt' : 'Escape mislukt' ?></strong>
-                <p><?= $won ? 'Minimaal 4 van de 6 antwoorden waren goed. Jullie eindtijd is opgeslagen in het teamoverzicht.' : 'Voor winst heb je minimaal 4 goede antwoorden nodig. Ook dit resultaat is opgeslagen in het teamoverzicht.' ?></p>
+                <strong><?= htmlspecialchars($summaryTitle) ?></strong>
+                <p><?= htmlspecialchars($summaryText) ?></p>
             </div>
 
             <div class="button-row button-row-center">

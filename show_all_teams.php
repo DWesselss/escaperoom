@@ -24,6 +24,23 @@ function formatSeconds(?int $seconds): string
     $remainingSeconds = $seconds % 60;
     return str_pad((string) $minutes, 2, '0', STR_PAD_LEFT) . ':' . str_pad((string) $remainingSeconds, 2, '0', STR_PAD_LEFT);
 }
+
+function getTeamStatus(array $team, bool $hasExtendedColumns): string
+{
+    if (!$hasExtendedColumns) {
+        return '-';
+    }
+
+    if ((int) ($team['escaped'] ?? 0) === 1) {
+        return 'Ontsnapt';
+    }
+
+    if (!empty($team['finished_at'])) {
+        return 'Niet ontsnapt';
+    }
+
+    return 'Nog bezig';
+}
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -48,9 +65,6 @@ function formatSeconds(?int $seconds): string
 
             <h2>Teams</h2>
 
-            <?php if (!$hasExtendedColumns): ?>
-                <p class="message message-error">Importeer de nieuwe escape-room.sql om ook ontsnapt, eindtijd en finished_at op te slaan.</p>
-            <?php endif; ?>
 
             <?php if (count($teams) === 0): ?>
                 <p class="empty-state">Er zijn nog geen teams opgeslagen.</p>
@@ -61,7 +75,7 @@ function formatSeconds(?int $seconds): string
                             <tr>
                                 <th>Team</th>
                                 <th>Speler 1</th>
-                                <th>Speler 2</th>
+                                <th>Overige spelers</th>
                                 <th>Score</th>
                                 <th>Status</th>
                                 <th>Eindtijd</th>
@@ -71,17 +85,11 @@ function formatSeconds(?int $seconds): string
                         <tbody>
                             <?php foreach ($teams as $team): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($team['team_name']) ?></td>
-                                    <td><?= htmlspecialchars($team['player_one']) ?></td>
-                                    <td><?= htmlspecialchars($team['player_two']) ?></td>
-                                    <td><?= htmlspecialchars((string) $team['score']) ?></td>
-                                    <td>
-                                        <?php if ($hasExtendedColumns): ?>
-                                            <?= (int) ($team['escaped'] ?? 0) === 1 ? 'Ontsnapt' : ((isset($team['finished_at']) && $team['finished_at'] !== null) ? 'Tijd verlopen' : 'Nog bezig') ?>
-                                        <?php else: ?>
-                                            -
-                                        <?php endif; ?>
-                                    </td>
+                                    <td><?= htmlspecialchars((string) ($team['team_name'] ?? '-')) ?></td>
+                                    <td><?= htmlspecialchars((string) ($team['player_one'] ?? '-')) ?></td>
+                                    <td><?= htmlspecialchars((string) ($team['player_two'] ?? '-')) ?></td>
+                                    <td><?= htmlspecialchars((string) ($team['score'] ?? 0)) ?></td>
+                                    <td><?= htmlspecialchars(getTeamStatus($team, $hasExtendedColumns)) ?></td>
                                     <td><?= $hasExtendedColumns ? htmlspecialchars(formatSeconds(isset($team['end_time_seconds']) ? (int) $team['end_time_seconds'] : null)) : '-' ?></td>
                                     <td><?= $hasExtendedColumns ? htmlspecialchars((string) ($team['finished_at'] ?? '-')) : '-' ?></td>
                                 </tr>

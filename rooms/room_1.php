@@ -8,8 +8,22 @@ if (!isset($_SESSION['escape'])) {
 }
 
 $escape = &$_SESSION['escape'];
+
+if (!empty($escape['finished'])) {
+    header('Location: ../finish.php');
+    exit;
+}
+
 $players = $escape['players'] ?? array_values(array_filter([$escape['player_one'] ?? '', $escape['player_two'] ?? '']));
 $riddles = $pdo->query('SELECT id, riddle, answer, hint, roomId FROM riddles WHERE roomId = 1 ORDER BY id ASC')->fetchAll();
+$totalRiddles = 0;
+
+try {
+    $totalRiddles = (int) $pdo->query('SELECT COUNT(*) FROM riddles')->fetchColumn();
+} catch (PDOException $e) {
+    $totalRiddles = 6;
+}
+
 $escape['answered_room_1'] = $escape['answered_room_1'] ?? [];
 $escape['correct_answers'] = $escape['correct_answers'] ?? [];
 $escape['wrong_answers'] = $escape['wrong_answers'] ?? [];
@@ -22,12 +36,22 @@ $normalizeAnswer = static function (string $value): string {
 $feedback = '';
 $feedbackType = 'success';
 
+$elapsedTime = max(0, time() - ($escape['start_time'] ?? time()));
+$timeLimit = 15 * 60;
+$remainingTime = max(0, $timeLimit - $elapsedTime);
+
+if ($elapsedTime >= $timeLimit) {
+    $escape['finished'] = true;
+    header('Location: ../finish.php?status=lost&reason=time');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $riddleId = (int) ($_POST['riddle_id'] ?? 0);
     $givenAnswer = trim($_POST['answer'] ?? '');
 
     foreach ($riddles as $riddle) {
-        if ($riddle['id'] !== $riddleId) {
+        if ((int) $riddle['id'] !== $riddleId) {
             continue;
         }
 
@@ -53,7 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (count($escape['wrong_answers']) >= 3) {
-        header('Location: ../finish.php?status=lost');
+        $escape['finished'] = true;
+        header('Location: ../finish.php?status=lost&reason=mistakes');
         exit;
     }
 
@@ -61,15 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: room_2.php');
         exit;
     }
-}
-
-$elapsedTime = max(0, time() - $escape['start_time']);
-$timeLimit = 2 * 60;
-$remainingTime = max(0, $timeLimit - $elapsedTime);
-
-if ($elapsedTime >= $timeLimit) {
-    header('Location: ../finish.php?status=lost');
-    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -98,7 +114,7 @@ if ($elapsedTime >= $timeLimit) {
             </article>
             <article class="hud-item">
                 <span class="hud-label">Tijd bezig</span>
-                <strong id="timer" data-elapsed="<?= $elapsedTime ?>" data-limit="<?= $timeLimit ?>">00:00</strong>
+                <strong id="timer" data-elapsed="<?= $elapsedTime ?>" data-limit="<?= $timeLimit ?>" data-expire-url="../finish.php?status=lost&amp;reason=time">00:00</strong>
             </article>
             <article class="hud-item">
                 <span class="hud-label">Tijd over</span>
@@ -111,8 +127,8 @@ if ($elapsedTime >= $timeLimit) {
         </section>
 
         <section class="score-strip">
-            <div class="score-pill score-pill-good">Goed: <?= count($escape['correct_answers']) ?> / 6</div>
-            <div class="score-pill score-pill-bad">Fout: <?= count($escape['wrong_answers']) ?> / 6</div>
+            <div class="score-pill score-pill-good">Goed: <?= count($escape['correct_answers']) ?> / <?= $totalRiddles ?></div>
+            <div class="score-pill score-pill-bad">Fout: <?= count($escape['wrong_answers']) ?> / 3</div>
             <div class="score-pill">Minimaal 4 goed om te winnen</div>
         </section>
 
@@ -148,7 +164,7 @@ if ($elapsedTime >= $timeLimit) {
 
         <div class="button-row button-row-center">
             <a class="btn btn-secondary" href="../index.php">Terug naar home</a>
-            <a class="btn btn-danger" href="../finish.php?status=lost">Spel stoppen</a>
+            <a class="btn btn-danger" href="../finish.php?status=lost&amp;reason=stopped">Spel stoppen</a>
         </div>
     </main>
 
@@ -156,6 +172,6 @@ if ($elapsedTime >= $timeLimit) {
         <p>Escape Island © 2026</p>
     </footer>
 
-    <script src="../app.js"></script>
+    <script src="../app.js?v=3"></script>
 </body>
 </html>
