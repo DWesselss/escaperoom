@@ -13,7 +13,7 @@ CREATE TABLE `riddles` (
   `hint` varchar(255) DEFAULT NULL,
   `roomId` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `riddles` (`id`, `riddle`, `answer`, `hint`, `roomId`) VALUES
 (1, 'Ik wijs altijd naar het noorden, zuiden, oosten en westen. Wat ben ik?', 'Kompas', 'Handig als je verdwaald bent op een eiland.', 1),
@@ -33,7 +33,7 @@ CREATE TABLE `teams` (
   `end_time_seconds` int DEFAULT NULL,
   `finished_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `reviews` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -43,6 +43,6 @@ CREATE TABLE `reviews` (
   `review_text` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 COMMIT;

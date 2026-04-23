@@ -19,7 +19,6 @@ $won = $status === 'won';
 if (!isset($_GET['status'])) {
     $won = $correctCount >= 4 && $wrongCount < 3;
 }
-$totalSolved = $correctCount;
 $totalRiddles = 0;
 
 try {
@@ -32,18 +31,46 @@ $timeSpent = max(0, time() - ($escape['start_time'] ?? time()));
 $minutes = floor($timeSpent / 60);
 $seconds = $timeSpent % 60;
 
-if (empty($_SESSION['escape']['result_saved']) && !empty($escape['team_id'])) {
+if (empty($_SESSION['escape']['result_saved'])) {
     try {
-        $statement = $pdo->prepare('UPDATE teams SET score = :score, escaped = :escaped, end_time_seconds = :end_time_seconds, finished_at = NOW() WHERE id = :id');
-        $statement->execute([
-            'score' => $correctCount,
-            'escaped' => $won ? 1 : 0,
-            'end_time_seconds' => $timeSpent,
-            'id' => $escape['team_id'],
-        ]);
+        if (!empty($escape['team_id'])) {
+            $statement = $pdo->prepare('
+                UPDATE teams
+                SET score = :score,
+                    `escaped` = :escaped,
+                    end_time_seconds = :end_time_seconds,
+                    finished_at = NOW()
+                WHERE id = :id
+            ');
+            $statement->execute([
+                'score' => $correctCount,
+                'escaped' => $won ? 1 : 0,
+                'end_time_seconds' => $timeSpent,
+                'id' => $escape['team_id'],
+            ]);
+        } else {
+            $statement = $pdo->prepare('
+                UPDATE teams
+                SET score = :score,
+                    `escaped` = :escaped,
+                    end_time_seconds = :end_time_seconds,
+                    finished_at = NOW()
+                WHERE team_name = :team_name
+                ORDER BY id DESC
+                LIMIT 1
+            ');
+            $statement->execute([
+                'score' => $correctCount,
+                'escaped' => $won ? 1 : 0,
+                'end_time_seconds' => $timeSpent,
+                'team_name' => $escape['team_name'],
+            ]);
+        }
+
         $_SESSION['escape']['result_saved'] = true;
         $_SESSION['escape']['finished'] = true;
     } catch (PDOException $e) {
+        die($e->getMessage());
     }
 }
 

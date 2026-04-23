@@ -2,18 +2,53 @@
 require_once 'dbcon.php';
 
 $teams = [];
-$hasExtendedColumns = true;
+$hasExtendedColumns = false;
+$existingColumns = [];
 
 try {
-    $teams = $pdo->query('SELECT team_name, player_one, player_two, score, escaped, end_time_seconds, finished_at FROM teams ORDER BY id DESC')->fetchAll();
-} catch (PDOException $e) {
-    $hasExtendedColumns = false;
-    try {
-        $teams = $pdo->query('SELECT team_name, player_one, player_two, score FROM teams ORDER BY id DESC')->fetchAll();
-    } catch (PDOException $e) {
-    }
-}
+    $columns = $pdo->query("SHOW COLUMNS FROM teams")->fetchAll(PDO::FETCH_ASSOC);
 
+    foreach ($columns as $column) {
+        $existingColumns[] = $column['Field'];
+    }
+
+    $hasExtendedColumns =
+        in_array('escaped', $existingColumns, true) &&
+        in_array('end_time_seconds', $existingColumns, true) &&
+        in_array('finished_at', $existingColumns, true);
+
+    if ($hasExtendedColumns) {
+    $teams = $pdo->query("
+    SELECT team_name, player_one, player_two, score, `escaped`, end_time_seconds, finished_at
+    FROM teams
+    ORDER BY id DESC
+")->fetchAll();
+    } else {
+        $teams = $pdo->query("
+            SELECT team_name, player_one, player_two, score
+            FROM teams
+            ORDER BY id DESC
+        ")->fetchAll();
+    }
+} catch (PDOException $e) {
+    die($e->getMessage());
+}
+function getTeamStatus(array $team, bool $hasExtendedColumns): string
+{
+    if (!$hasExtendedColumns) {
+        return '-';
+    }
+
+    if (!empty($team['escaped'])) {
+        return 'Ontsnapt';
+    }
+
+    if (!empty($team['finished_at'])) {
+        return 'Niet gehaald';
+    }
+
+    return '-';
+}
 function formatSeconds(?int $seconds): string
 {
     if ($seconds === null || $seconds <= 0) {
@@ -22,24 +57,9 @@ function formatSeconds(?int $seconds): string
 
     $minutes = floor($seconds / 60);
     $remainingSeconds = $seconds % 60;
-    return str_pad((string) $minutes, 2, '0', STR_PAD_LEFT) . ':' . str_pad((string) $remainingSeconds, 2, '0', STR_PAD_LEFT);
-}
 
-function getTeamStatus(array $team, bool $hasExtendedColumns): string
-{
-    if (!$hasExtendedColumns) {
-        return '-';
-    }
-
-    if ((int) ($team['escaped'] ?? 0) === 1) {
-        return 'Ontsnapt';
-    }
-
-    if (!empty($team['finished_at'])) {
-        return 'Niet ontsnapt';
-    }
-
-    return 'Nog bezig';
+    return str_pad((string) $minutes, 2, '0', STR_PAD_LEFT) . ':' .
+           str_pad((string) $remainingSeconds, 2, '0', STR_PAD_LEFT);
 }
 ?>
 <!DOCTYPE html>

@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
         };
 
+        let intervalId;
+
         const updateTimer = () => {
             timerElement.textContent = formatTime(elapsed);
 
@@ -25,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (elapsed >= limit && !hasExpired) {
                 hasExpired = true;
+                clearInterval(intervalId);
 
                 if (expireUrl !== '') {
                     window.location.href = expireUrl;
@@ -32,11 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            elapsed += 1;
+            if (!hasExpired) {
+                elapsed += 1;
+            }
         };
 
         updateTimer();
-        setInterval(updateTimer, 1000);
+        intervalId = setInterval(updateTimer, 1000);
     }
 
     const playerCountSelect = document.getElementById('player-count');

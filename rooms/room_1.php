@@ -167,33 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a class="btn btn-danger" href="../finish.php?status=lost&amp;reason=stopped">Spel stoppen</a>
         </div>
     </main>
-<script>
-const startedAt = <?= (int) ($_SESSION['escape']['started_at'] ?? time()) ?>;
-const timeLimit = 15 * 60;
 
-function updateTimer() {
-    const now = Math.floor(Date.now() / 1000);
-    const elapsed = now - startedAt;
-    const remaining = timeLimit - elapsed;
-
-    if (remaining <= 0) {
-        window.location.href = "../time_up.php";
-        return;
-    }
-
-    const minutes = Math.floor(remaining / 60);
-    const seconds = remaining % 60;
-
-    const timeLeftElement = document.getElementById("time-left");
-    if (timeLeftElement) {
-        timeLeftElement.textContent =
-            String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
-    }
-}
-
-updateTimer();
-setInterval(updateTimer, 1000);
-</script>
 
     <footer class="site-footer">
         <p>Escape Island © 2026</p>

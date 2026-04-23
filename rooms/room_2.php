@@ -119,7 +119,7 @@ if ($elapsedTime >= $timeLimit) {
             </article>
             <article class="hud-item">
              <span class="hud-label">Tijd bezig</span>
-              <strong id="timer" data-elapsed="<?= $elapsedTime ?>" data-limit="<?= $timeLimit ?>">00:00</strong>
+              <strong id="timer" data-elapsed="<?= $elapsedTime ?>" data-limit="<?= $timeLimit ?>" data-expire-url="../finish.php?status=lost&amp;reason=time">00:00</strong>
             </article>
             <article class="hud-item">
               <span class="hud-label">Tijd over</span>
@@ -172,33 +172,7 @@ if ($elapsedTime >= $timeLimit) {
             <a class="btn btn-danger" href="../finish.php?status=lost">Spel stoppen</a>
         </div>
     </main>
-<script>
-const startedAt = <?= (int) ($_SESSION['escape']['started_at'] ?? time()) ?>;
-const timeLimit = 15 * 60;
 
-function updateTimer() {
-    const now = Math.floor(Date.now() / 1000);
-    const elapsed = now - startedAt;
-    const remaining = timeLimit - elapsed;
-
-    if (remaining <= 0) {
-        window.location.href = "../time_up.php";
-        return;
-    }
-
-    const minutes = Math.floor(remaining / 60);
-    const seconds = remaining % 60;
-
-    const timeLeftElement = document.getElementById("time-left");
-    if (timeLeftElement) {
-        timeLeftElement.textContent =
-            String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
-    }
-}
-
-updateTimer();
-setInterval(updateTimer, 1000);
-</script>
     <footer class="site-footer">
         <p>Escape Island © 2026</p>
     </footer>
